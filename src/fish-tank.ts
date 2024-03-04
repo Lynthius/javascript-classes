@@ -1,5 +1,4 @@
-class Fish {
-  // ?Jak je wywolac w console logu bez dodawania argumentow w funkcji
+export class Fish {
   age: number = 0;
   hungerLevel: number = 0;
   illness: boolean = false;
@@ -12,7 +11,9 @@ class Fish {
 
   // methods
   changeAge(newAge: number) {
-    return this.age = newAge;
+    if (newAge > 0) {
+      return this.age = newAge;
+    }
   }
   changeHungerLevel(hungerLevel: number) {
     return this.hungerLevel = hungerLevel;
@@ -30,7 +31,7 @@ class Fish {
   }
 }
 
-class Guppy extends Fish {
+export class Guppy extends Fish {
   isSleep: boolean;
 
   constructor(age: number, hungerLevel: number, illness: boolean, isSleep: boolean) {
@@ -39,13 +40,13 @@ class Guppy extends Fish {
   }
 
   // method
-  changeIsSleep(isSleep: boolean) {
-    return this.isSleep = isSleep;
+  changeIsSleep() {
+    return this.isSleep = !this.isSleep;
   }
 
 }
 
-class Shrimp extends Fish {
+export class Shrimp extends Fish {
   isFiltering: boolean;
   constructor(age: number, hungerLevel: number, illness: boolean, isFiltering: boolean) {
     super(age, hungerLevel, illness);
@@ -53,12 +54,12 @@ class Shrimp extends Fish {
   }
 
   // method
-  changeisFiltering(isFiltering: boolean) {
-    return this.isFiltering = isFiltering;
+  changeisFiltering() {
+    return this.isFiltering = !this.isFiltering;
   }
 }
 
-class Aquarium {
+export class Aquarium {
   fishes;
   fillLevel;
 
@@ -68,15 +69,20 @@ class Aquarium {
   }
 
   //methods
-  feedFishes(fishes: Fish[]) {
-    fishes.forEach((fish) => {
-      fish.hungerLevel = 100;
+  feedFishes() {
+    this.fishes.forEach((fish) => {
+      fish.hungerLevel = 0;
     })
   }
 
-  isSomeHungry(fishes: Fish[]) {
-    fishes.forEach((fish) => {
-      if (fish.hungerLevel < 50) {
+  //? czy to oznacza że pozwala tylko na zwracanie true/false?
+  isSomeHungry(): boolean {
+    //A: MAP
+    //b: filter
+    //c: some
+    //d: every
+    return this.fishes.some((fish) => {
+      if (fish.hungerLevel > 50) {
         console.log('fish needs food');
         return true;
       } else {
@@ -85,43 +91,98 @@ class Aquarium {
       }
     })
   }
-
-  isSomeIll(fishes: Fish[]) {
-    fishes.forEach((fish) => {
-      fish.illness ? console.log('propably die') : console.log('fish is fine');
-      fish.illness ? true : false;
+  // dodałem boolean
+  isSomeIll(fishes: Fish[]): boolean {
+    return fishes.some((fish) => {
+      return fish.illness;
     })
   }
 
   fill(fillLevel: number) {
-    this.fillLevel = fillLevel;
+    if (fillLevel < 100) {
+      this.fillLevel = fillLevel;
+    }
+  }
+
+  //! add a new fish to the aquarium
+  addFish(fish: Fish) {
+    this.fishes.push(fish)
+  }
+
+  //? czy w TS nie korzysta się ze średników?
+  action() {
+    this.fishes.forEach(fish => {
+      const propability = Math.random() > 0.5
+      if (propability) {
+        if (fish instanceof Guppy) {
+          fish.changeIsSleep()
+        }
+        if (fish instanceof Shrimp) {
+          fish.changeisFiltering()
+        }
+      }
+    })
+  }
+
+  info() {
+    this.fishes.forEach(fish => {
+      console.log(fish)
+    })
+  }
+
+  //! send fish to quarantine (co jak więcej ryb niż jedna?)
+  sendToQuarantine(aquarium: Aquarium, fish: Fish) {
+    const index = this.fishes.findIndex((f) => f === fish);
+    if (index !== -1) {
+      const selectedFish = this.fishes.splice(index, 1)[0];
+      aquarium.fishes.push(selectedFish);
+    }
+  }
+}
+
+export class AquariumQuarantine extends Aquarium {
+  constructor(fishes: Fish[], fillLevel: number) {
+    super(fishes, fillLevel)
+  }
+
+  //? w jaki sposób ma wykorzystywać metodę addFish z fishes? Chyba robię źle że tworzę nową metodę?
+  //! return fish to aquarium
+  returnToAquarium(aquarium: Aquarium, fish: Fish) {
+    if (this.fishes.includes(fish)) {
+      const selectedFish = this.fishes.splice(this.fishes.indexOf(fish), 1)[0];
+      aquarium.fishes.push(selectedFish);
+    }
   }
 }
 
 
-
 const guppy = new Guppy(1, 4, false, false);
 const shrimp = new Shrimp(2, 3, false, true);
-console.dir(guppy);
-guppy.speak();
+const fishSick = new Fish(2, 3, true,);
 guppy.changeAge(9);
 guppy.changeHungerLevel(5);
 guppy.changeIlnessFlag(true);
-guppy.changeIsSleep(true);
-console.dir(guppy);
+guppy.changeIsSleep();
 guppy.speak();
+shrimp.changeisFiltering();
 
-console.dir(shrimp);
+const aquarium = new Aquarium([guppy, shrimp], 90);
+const aquariumQuarantine = new AquariumQuarantine([shrimp, fishSick], 90);
 
-shrimp.changeisFiltering(false);
-console.dir(shrimp);
-
-
-// function calculateTax(income: number, taxYear = 2022): number {
-// 	if (taxYear < 2022)
-// 		return income * 1.2;
-// 	return income * 1.3;
-// }
+console.log('info');
+aquarium.info();
 
 
-// console.log(calculateTax(10_000, 1991));
+console.log('before');
+console.log(aquarium);
+console.log(aquariumQuarantine);
+aquarium.sendToQuarantine(aquariumQuarantine, guppy);
+// console.log('after');
+// console.log(aquarium);
+// console.log(aquariumQuarantine);
+// console.log('return');
+// aquariumQuarantine.returnToAquarium(aquarium, guppy);
+// console.log(aquarium);
+// console.log(aquariumQuarantine);
+
+
